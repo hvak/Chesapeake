@@ -1,2 +1,2 @@
 # Chesapeake
-Chesapeak - A REPRAP 3D printer made from DVD drives
+Chesapeake - A REPRAP 3D printer made from DVD drives
