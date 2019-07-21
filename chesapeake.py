@@ -25,7 +25,6 @@ print("                CHESAPEAKE v1.0: A REPRAP 3D printer made from DVD drives
 time.sleep(delay)
 print("                                Created by Hersh Vakharia\n")
 
-
 print('USB Port: ' + args.port)
 print('Gcode File: ' + args.file)
 print('')
@@ -37,53 +36,89 @@ def removeComment(string):
         else:
                 return string[:string.index(';')]
 
-#open the serial port
-print('Opening Serial Port...')
-try:
-        s = serial.Serial(args.port, 115200)
-        if (s.isOpen() == True):
-                print(args.port + " has opened successfully.")
-        else:
-                print(args.port + " has failed to open.")
+def openSerialPort():
+        #open the serial port
+        print('Opening Serial Port...')
+        try:
+                s = serial.Serial(args.port, 115200)
+                if (s.isOpen() == True):
+                        print(args.port + " has opened successfully.")
+                        return s
+                else:
+                        print(args.port + " has failed to open.")
+                        exit()
+        except:
+                print("An error occurred while opening " + args.port)
                 exit()
-except:
-        print("An error has occurred opening " + args.port)
-        exit()
 
-#open the gcode file
-print('Opening Gcode file...')
-try:
-        f = open(args.file, 'r')
-        if (f.isOpen() == True):
-                print(args.file + " has opened successfully.")
-        else:
-                print(args.file + " has failed to open.")
+def openFile():
+        #open the gcode file
+        print('Opening Gcode file...')
+        try:
+                f = open(args.file, 'r')
+                if (f.isOpen() == True):
+                        print(args.file + " has opened successfully.")
+                        return f
+                else:
+                        print(args.file + " has failed to open.")
+                        exit()
+        except:
+                print("An error occurred while opening " + args.file)
                 exit()
-except:
-        print("An error has occurred opening " + args.file)
-        exit()
+
+def sendGcode(serial, file):
+
+        #wake up printer and initialize
+        serial.write("\n\n")
+        time.sleep(2)
+
+        serial.flushInput()
+        print("Sending Gcode...")
+
+        for line in file:
+                l = removeComment(line)
+                l = l.strip()
+                if (l.isspace() == False and len(l) > 0):
+                        print("Sending: " + l)
+                        serial.write(l + "\n")
+                        grbl_out = serial.readline() #wait for response from printer
+                        print(" : " + grbl_out.strip())
+
+def sendShutdownSequence(serial, sequence):
+        for line in sequence:
+                l = removeComment(line)
+                l = l.strip()
+                if (l.isspace() == False and len(l) > 0):
+                        print("Sending: " + l)
+                        serial.write(l + "\n")
+                        grbl_out = serial.readline() #wait for response from printer
+                        print(" : " + grbl_out.strip())
+
+shutdown = [
+        'M104 S0 ;extruder heater off',
+        'G91 ;relative positioning',
+        'G1 E-1 F300  ;retract the filament a bit before lifting the nozzle, to release some of the pressure',
+        'G1 Z+0.5 E-5 X-20 Y-20 F9000 ;move Z up a bit and retract filament even more',
+        'G28 X0 Y0 ;move X/Y to min endstops, so the head is out of the way',
+        'G1 Y150 F5000 ;move completed part out',
+        'M84 ;steppers off',
+        'G90 ;absolute positioning',
+]
 
 
-print('')
+#----------------------------------------------------------------------
 
-#wake up printer and initialize
-s.write("\n\n")
-time.sleep(2)
+s = openSerialPort()
+f = openFile()
 
-s.flushInput()
-print("Sending Gcode...")
+print('');
 
-for line in f:
-        l = removeComment(line)
-        l = l.strip()
-        if (l.isspace() == False and len(l) > 0):
-                print("Sending: " + l)
-                s.write(l + "\n")
-                grbl_out = s.readline() #wait for response from printer
-                print(" : " + grbl_out.strip())
-
-raw_input("Press any key to exit after printing has ended...")
+sendGcode(s, f)
+sendShutdownSequence(s, shutdown)
 
 #close the file and the serial port
 f.close()
 s.close()
+
+raw_input("Press any key to exit after printing has ended...")
+
