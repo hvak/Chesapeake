@@ -7,24 +7,11 @@ parser.add_argument('-p', '--port', help='USB port of the Arduino')
 parser.add_argument('-f', '--file', help='Gcode file path')
 args = parser.parse_args()
 
-#ascii word art font: slant
-delay = 0.1
-print("    __4___       ________  _____________ ___    ____  _________    __ __ ______     __4___")
-time.sleep(delay)
-print(" _  \ \ \ \     / ____/ / / / ____/ ___//   |  / __ \/ ____/   |  / //_// ____/  _  \ \ \ \\")
-time.sleep(delay)
-print("<'\ /_/_/_/    / /   / /_/ / __/  \__ \/ /| | / /_/ / __/ / /| | / ,<  / __/    <'\ /_/_/_/")
-time.sleep(delay)
-print(" ((____!___/) / /___/ __  / /___ ___/ / ___ |/ ____/ /___/ ___ |/ /| |/ /___     ((____!___/)")
-time.sleep(delay)
-print("  \\0\\0\\0\\0\/  \____/_/ /_/_____//____/_/  |_/_/   /_____/_/  |_/_/ |_/_____/      \\0\\0\\0\\0\/")
-time.sleep(delay)
-print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-time.sleep(delay)
-print("                CHESAPEAKE v1.0: A REPRAP 3D printer made from DVD drives")
-time.sleep(delay)
-print("                                Created by Hersh Vakharia\n")
+logo = open('chesapeake_logo.txt', 'r')
+for line in logo:
+        print(line, end='')
 
+print('')
 print('USB Port: ' + args.port)
 print('Gcode File: ' + args.file)
 print('')
@@ -108,6 +95,8 @@ shutdown = [
 
 #----------------------------------------------------------------------
 
+
+
 s = openSerialPort()
 f = openFile()
 
@@ -120,5 +109,5 @@ sendShutdownSequence(s, shutdown)
 f.close()
 s.close()
 
-raw_input("Press any key to exit after printing has ended...")
+input("Press any key to exit after printing has ended...")
 
