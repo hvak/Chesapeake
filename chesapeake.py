@@ -100,7 +100,7 @@ shutdown = [
 s = openSerialPort()
 f = openFile()
 
-print('');
+print('')
 
 sendGcode(s, f)
 sendShutdownSequence(s, shutdown)
