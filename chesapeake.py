@@ -1,20 +1,38 @@
 import serial
 import time
 import argparse
+import sys
 
-parser = argparse.ArgumentParser(description='CHESAPEAKE v1.0 - Send gcode file to arduino over serial')
-parser.add_argument('-p', '--port', help='USB port of the Arduino')
-parser.add_argument('-f', '--file', help='Gcode file path')
-args = parser.parse_args()
 
-logo = open('chesapeake_logo.txt', 'r')
-for line in logo:
-        print(line, end='')
 
-print('')
-print('USB Port: ' + args.port)
-print('Gcode File: ' + args.file)
-print('')
+def openSerialPort(port, baud):
+        #open the serial port
+        print('Opening Serial Port...')
+        try:
+                s = serial.Serial(port, baud)
+                if (s.isOpen() == True):
+                        print(port + " has opened successfully.")
+                        return s
+                else:
+                        print(port + " has failed to open.")
+                        exit()
+        except:
+                print("An error occurred while opening " + port)
+                exit()
+
+def openFile(file):
+        #open the gcode file
+        print('Opening Gcode file...')
+        try:
+                f = open(file, 'r')
+                print(file + " has opened successfully.")
+                return f
+        except IOError:
+                print("Could not open " + file)
+                exit()
+        except:
+                print("An error occurred while trying to open " + file)
+                exit()
 
 #remove comments present in a gcode line
 def removeComment(string):
@@ -23,65 +41,25 @@ def removeComment(string):
         else:
                 return string[:string.index(';')]
 
-def openSerialPort():
-        #open the serial port
-        print('Opening Serial Port...')
-        try:
-                s = serial.Serial(args.port, 115200)
-                if (s.isOpen() == True):
-                        print(args.port + " has opened successfully.")
-                        return s
-                else:
-                        print(args.port + " has failed to open.")
-                        exit()
-        except:
-                print("An error occurred while opening " + args.port)
-                exit()
-
-def openFile():
-        #open the gcode file
-        print('Opening Gcode file...')
-        try:
-                f = open(args.file, 'r')
-                if (f.isOpen() == True):
-                        print(args.file + " has opened successfully.")
-                        return f
-                else:
-                        print(args.file + " has failed to open.")
-                        exit()
-        except:
-                print("An error occurred while opening " + args.file)
-                exit()
-
-def sendGcode(serial, file):
+def sendGcode(serial, sequence):
 
         #wake up printer and initialize
-        serial.write("\n\n")
+        serial.write("\n\n".encode('utf-8'))
         time.sleep(2)
 
         serial.flushInput()
-        print("Sending Gcode...")
-
-        for line in file:
-                l = removeComment(line)
-                l = l.strip()
-                if (l.isspace() == False and len(l) > 0):
-                        print("Sending: " + l)
-                        serial.write(l + "\n")
-                        grbl_out = serial.readline() #wait for response from printer
-                        print(" : " + grbl_out.strip())
-
-def sendShutdownSequence(serial, sequence):
         for line in sequence:
                 l = removeComment(line)
                 l = l.strip()
                 if (l.isspace() == False and len(l) > 0):
                         print("Sending: " + l)
-                        serial.write(l + "\n")
+                        serial.write((l + "\n").encode('utf-8'))
                         grbl_out = serial.readline() #wait for response from printer
-                        print(" : " + grbl_out.strip())
+                        print(" > " + grbl_out.strip().decode('utf-8'))
 
-shutdown = [
+
+
+SHUTDOWN = [
         'M104 S0 ;extruder heater off',
         'G91 ;relative positioning',
         'G1 E-1 F300  ;retract the filament a bit before lifting the nozzle, to release some of the pressure',
@@ -92,22 +70,36 @@ shutdown = [
         'G90 ;absolute positioning',
 ]
 
+if __name__ == '__main__':        
 
-#----------------------------------------------------------------------
+        parser = argparse.ArgumentParser(description='CHESAPEAKE v1.0 - Send gcode file to arduino over serial')
+        parser.add_argument('-p', '--port', help='Arduino serial port')
+        parser.add_argument('-f', '--file', help='Gcode file path')
+        if len(sys.argv) == 1:
+                parser.print_help()
+                sys.exit(1)
 
 
+        args = parser.parse_args()
+        logo = open('chesapeake_logo.txt', 'r')
+        for line in logo:
+                print(line, end='')
 
-s = openSerialPort()
-f = openFile()
+        print('')
+        print('USB Port: ' + args.port)
+        print('Gcode File: ' + args.file)
+        print('')
 
-print('')
+        ser = openSerialPort(args.port, 115200)
+        gcode = openFile(args.file)
+        
 
-sendGcode(s, f)
-sendShutdownSequence(s, shutdown)
+        print('')
+        sendGcode(ser, gcode)
+        sendGcode(ser, SHUTDOWN)
 
-#close the file and the serial port
-f.close()
-s.close()
+        #close the file and the serial port
+        gcode.close()
+        ser.close()
 
-input("Press any key to exit after printing has ended...")
-
+        print('\n The GCode has finished sending.')
