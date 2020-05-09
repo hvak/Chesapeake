@@ -3,8 +3,6 @@ import time
 import argparse
 import sys
 
-
-
 def openSerialPort(port, baud):
         #open the serial port
         print('Opening Serial Port...')
@@ -58,7 +56,6 @@ def sendGcode(serial, sequence):
                         print(" > " + grbl_out.strip().decode('utf-8'))
 
 
-
 SHUTDOWN = [
         'M104 S0 ;extruder heater off',
         'G91 ;relative positioning',
@@ -70,17 +67,20 @@ SHUTDOWN = [
         'G90 ;absolute positioning',
 ]
 
-if __name__ == '__main__':        
-
+def main():
         parser = argparse.ArgumentParser(description='CHESAPEAKE v1.0 - Send gcode file to arduino over serial')
-        parser.add_argument('-p', '--port', help='Arduino serial port')
-        parser.add_argument('-f', '--file', help='Gcode file path')
+        parser.add_argument('-p', '--port', help='Arduino serial port', required=True)
+        parser.add_argument('-b', '--baud', nargs='?', type=int, const=115200, default=115200, help='Serial baud rate (commonly 115200 for REPRAP printers)')
+        parser.add_argument('-f', '--file', help='Gcode file path', required=True)
+        try:
+                args = parser.parse_args()
+        except:
+                parser.print_help()
+                exit()
         if len(sys.argv) == 1:
                 parser.print_help()
-                sys.exit(1)
+                exit()
 
-
-        args = parser.parse_args()
         logo = open('chesapeake_logo.txt', 'r')
         for line in logo:
                 print(line, end='')
@@ -90,11 +90,12 @@ if __name__ == '__main__':
         print('Gcode File: ' + args.file)
         print('')
 
-        ser = openSerialPort(args.port, 115200)
+        #open the file and serial port
+        ser = openSerialPort(args.port, args.baud)
         gcode = openFile(args.file)
-        
 
         print('')
+        #send the gcode commands
         sendGcode(ser, gcode)
         sendGcode(ser, SHUTDOWN)
 
@@ -103,3 +104,9 @@ if __name__ == '__main__':
         ser.close()
 
         print('\n The GCode has finished sending.')
+        print('Exiting...')
+
+
+if __name__ == '__main__':
+        if not main():
+                exit()
