@@ -68,7 +68,7 @@ SHUTDOWN = [
 ]
 
 def main():
-        parser = argparse.ArgumentParser(description='CHESAPEAKE v1.0 - Send gcode file to arduino over serial')
+        parser = argparse.ArgumentParser(description='Serial GCode sender for the Chesapeake reprap printer')
         parser.add_argument('-p', '--port', help='Arduino serial port', required=True)
         parser.add_argument('-b', '--baud', nargs='?', type=int, const=115200, default=115200, help='Serial baud rate (commonly 115200 for REPRAP printers)')
         parser.add_argument('-f', '--file', help='Gcode file path', required=True)
