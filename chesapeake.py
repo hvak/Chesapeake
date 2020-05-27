@@ -81,9 +81,15 @@ def main():
                 parser.print_help()
                 exit()
 
-        logo = open('chesapeake_logo.txt', 'r')
-        for line in logo:
-                print(line, end='')
+        #load logo if the logo file exists
+        try:
+                logo = open('chesapeake_logo.txt', 'r')
+                for line in logo:
+                        print(line, end='')
+                logo.close()
+        except:
+                pass
+
 
         print('')
         print('USB Port: ' + args.port)
